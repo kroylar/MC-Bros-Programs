@@ -1,0 +1,279 @@
+function refuel(slot, max_height)
+    turtle.select(slot)
+    -- Refuel until the turtle can go far enough
+    while turtle.getFuelLevel() < max_height * 2 do
+        -- Always leave 1 fuel in slot
+        fuel_count = turtle.getItemCount(fuel_slot)
+        turtle.refuel(fuel_count - 1)
+        print("Can go ", turtle.getFuelLevel(), " blocks.")
+        -- If one refuel still isn't enough then wait until more 
+        -- fuel is added
+        if turtle.getFuelLevel() < max_height * 2 then
+            print("Out of fuel...")
+            while turtle.getItemCount(slot) == 0 do
+                os.sleep(1)
+            end
+        end
+    end
+
+end
+
+function plant(sap_slot, bone_slot, tree_width)
+    min = 1 + tree_width * tree_width
+    print("Sapplings left: ", turtle.getItemCount(sap_slot))
+    -- We stop at 2 because we never want the slot to be empty
+    if turtle.getItemCount(sap_slot) < min then
+        print("Out of saplings. Trying chest.")
+        turtle.turnLeft()
+        turtle.select(sap_slot)
+        turtle.suck()
+        turtle.turnRight()
+        if turtle.getItemCount(sap_slot) < min then
+            print("Couldn't find any in chest. Please fill me up...")
+            n = 0 
+            while turtle.getItemCount(sap_slot) < min do
+                os.sleep(1)
+                n = n + 1
+                -- Only wait 5 minutes
+                if n > 60 * 5 then return false end
+            end
+            print("Saplings detected. Continuing.")
+        end
+    end
+
+    print("Bone mean left: ", turtle.getItemCount(bone_slot))
+    if turtle.getItemCount(bone_slot) < 2 then
+        print("Out of bone meal. Trying chest.")
+        turtle.turnRight()
+        turtle.select(bone_slot)
+        turtle.suck()
+        turtle.turnLeft()
+        if turtle.getItemCount(bone_slot) < 2 then
+            print("Couldn't find any in chest. Please fill me up...")
+            while turtle.getItemCount(bone_slot) < min do
+                os.sleep(1)
+                n = n + 1
+                -- Only wait 5 minutes
+                if n > 60 * 5 then return false end
+            end
+            print("Bone meal detected. Continuing.")
+        end
+    end
+    
+    if tree_width == 2 then
+        turtle.select(sap_slot)
+        turtle.forward()
+	turtle.forward()
+	turtle.turnLeft()
+	turtle.place()
+	turtle.turnRight()
+	turtle.back()
+	turtle.place()
+	turtle.turnLeft()
+	turtle.place()
+	turtle.turnRight()
+	turtle.back()
+	turtle.place()
+        --turtle.place()
+        --turtle.forward()
+        --turtle.place()
+	--turtle.forward()
+        --turtle.turnLeft()
+        --turtle.place()
+        --turtle.forward()
+        --turtle.turnLeft()
+        --turtle.place()
+        --turtle.turnLeft()
+        --turtle.forward()
+        --turtle.turnLeft()
+        --turtle.back()
+
+        turtle.select(bone_slot)
+        turtle.place()
+--	turtle.select(fuel_slot)
+--	n = 0
+--	while not turtle.compare() do
+--	   turtle.select(bone_slot)
+--	   turtle.place()
+--	   turtle.select(fuel_slot)
+--	   n = n + 1
+--	   os.sleep(1)
+--	   if n > 60 then
+--	   	print("The tree is not growing!")
+--		return false
+--	   end
+--	end
+    else
+        turtle.select(sap_slot)
+        turtle.place()
+    
+        turtle.select(bone_slot)
+        turtle.place()
+    end
+
+    return true
+end
+
+function logger(size)
+    turn = "left"
+    height = 0
+    if not turtle.detect() then
+        print("No tree to chop.") -- plant one!
+    else
+        turtle.dig()
+        turtle.forward()
+        
+        -- test to see which way to turn
+        turtle.turnRight()
+        if turtle.detect() then turn = "right" end
+        turtle.turnLeft()
+
+        while turtle.detectUp() do
+            turtle.digUp()
+            if turtle.detect() then
+                turtle.dig()
+            end
+            turtle.up()
+            height = height + 1
+        end
+	turtle.dig()
+        print("Height: ", height)
+        if size == 1 then
+            while height > 0 do
+                turtle.down()
+                height = height - 1
+            end
+            turtle.turnLeft()
+            turtle.turnLeft()
+            turtle.forward()
+        else
+    
+            if turn == "left" then 
+                turtle.turnLeft() 
+            else 
+                turtle.turnRight()
+            end
+            
+            while not turtle.forward() do
+                turtle.dig()
+            end
+    
+            -- turn back
+            if turn == "left" then
+                turtle.turnRight()
+            else
+                turtle.turnLeft()
+            end
+    
+            while turtle.detectDown() and height > 0 do
+                turtle.digDown()
+                if turtle.detect() then
+                    turtle.dig()
+                end
+                turtle.down()
+                height = height - 1
+            end
+            turtle.dig()
+
+            if turn == "left" then
+                turtle.turnRight()
+                turtle.forward()
+                turtle.turnRight()
+                turtle.forward()
+            else
+                turtle.turnLeft()
+                turtle.forward()
+                turtle.turnLeft()
+                turtle.forward()
+            end
+
+        end
+
+    end
+end
+
+function drop_off(fuel_slot, sap_slot, bone_slot)
+    fuels = turtle.getItemCount(fuel_slot)
+    saps  = turtle.getItemCount(sap_slot)
+    bones = turtle.getItemCount(bone_slot)
+    -- put stuff in the chests
+    for slot = 4, 16 do
+        turtle.select(slot)
+        -- Fill up fuel slot
+        if fuels < 64 and turtle.compareTo(fuel_slot) then
+            turtle.transferTo(fuel_slot)
+        end
+        if turtle.compareTo(sap_slot) then
+            if saps < 64 then turtle.transferTo(sap_slot) end
+            -- drop the rest off
+            turtle.turnRight()
+            turtle.drop()
+            turtle.turnLeft()
+        -- Do this because suck() takes a whole stack and we get an extra
+        -- bone meal
+        elseif turtle.compareTo(bone_slot) then
+            if bones < 64 then turtle.transferTo(bone_slot) end
+            -- drop the rest off (even though there shouldn't be extra)
+            turtle.turnLeft()
+            turtle.drop()
+            turtle.turnRight()
+        else
+            turtle.drop()
+        end
+    end
+end
+
+
+function collect_sap(sap_slot)
+    turtle.select(sap_slot)
+    turtle.forward()
+    max = 4
+    for n = 1, max do
+        turtle.suckDown()
+        turtle.suck()
+        turtle.turnLeft()
+        turtle.suck()
+        turtle.turnRight()
+        turtle.forward()
+        if n == max / 2 then
+            turtle.turnRight()
+            turtle.turnRight()
+        end
+    end
+    turtle.forward()
+    turtle.turnLeft()
+    turtle.turnLeft()
+end
+
+function main(tree_width)
+    fuel_slot  = 1
+    sap_slot   = 2
+    bone_slot  = 3
+    max_height = 60
+    
+    turtle.select(sap_slot)
+    n = 1
+    while plant(sap_slot, bone_slot, tree_width) do
+        refuel(fuel_slot, max_height)
+        --plant(sap_slot, bone_slot)
+        logger(tree_width)
+        drop_off(fuel_slot, sap_slot, bone_slot)
+        turtle.turnLeft()
+        turtle.turnLeft()
+        if n % 5 == 0 then 
+            collect_sap(sap_slot) 
+        end
+        print("Chopped ", n, " trees.")
+        n = n + 1
+    end
+end
+
+local args = {...}
+local tree_width = 1
+if args ~= nil and args[1] ~= nil then
+    tree_width = tonumber(args[1])
+end
+
+print("Tree width: ", tree_width)
+--logger(tree_width)
+main(tree_width)
