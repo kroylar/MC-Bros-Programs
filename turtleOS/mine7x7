@@ -20,6 +20,12 @@ function kamfuel(slot,blocks)
 
   if fueling ~= "unlimited" then
     if fueling < blocks then
+      if turtle.getItemCount(1) < 2 then
+        print("Need more fuel!")
+        while turtle.getItemCount(1) < 2 do
+          os.sleep(1)
+        end
+      end
       turtle.select(1)
       turtle.refuel()
       turtle.select(slot)
@@ -69,7 +75,11 @@ function mine21(size)
     
     turtle.select(2)
     if turtle.getItemCount(16) < 2 then
-      -- hook for future expansion
+      print("Need more torches before proceeding, please refill.")
+      while turtle.getItemCount(16) < 2 do
+        os.sleep(1)
+      end
+      print("Torches detected. Continuing!")
     end
     for i=1,7 do
       if turtle.detect() then
@@ -77,7 +87,7 @@ function mine21(size)
         turtle.dig()
       end
 
-      if turtle.detectUp() then
+      while turtle.detectUp() do
         turtle.digUp()
       end
 
@@ -123,7 +133,8 @@ function makerows(rows,cols)
       local tmp = i%2
 
       kamfuel(16,7)
-      fward(7)
+      -- need to mine here because blocks may have been placed since last pass
+      mine21(1)
 
       if tmp == 0 then
         turtle.turnLeft()
@@ -139,7 +150,7 @@ function makerows(rows,cols)
         turtle.turnLeft()
       end
     end
-    fward(7)
+    mine21(1)
     if rows%2 == 0 then
       turtle.turnLeft()
     else
@@ -151,10 +162,10 @@ end
 function makecolumns(rows,cols)
   if cols-1 > 0 then
     for i=1,(cols-1) do
-      local tmp = i%2
+      local tmp = (i+rows)%2
 
       kamfuel(16,7)
-      fward(7)
+      mine21(1)
 
       if tmp == 1 then
         turtle.turnLeft()
@@ -170,8 +181,8 @@ function makecolumns(rows,cols)
         turtle.turnLeft()
       end
     end
-    fward(7)
-    if cols%2 == 1 then
+    mine21(1)
+    if (cols+rows)%2 == 1 then
       turtle.turnLeft()
     else
       turtle.turnRight()
@@ -189,7 +200,7 @@ if arg ~= nil then
    rows = 1
   end
 
-  local tmp = tonumber(arg[2])
+  tmp = tonumber(arg[2])
 
   if tmp ~= nil then
     cols = tmp
